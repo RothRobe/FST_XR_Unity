@@ -1,7 +1,11 @@
 ﻿using System;
 using DefaultNamespace;
 using Microsoft.MixedReality.Toolkit;
+using Microsoft.MixedReality.Toolkit.Input;
+using Microsoft.MixedReality.Toolkit.UI;
+using Microsoft.MixedReality.Toolkit.UI.BoundsControl;
 using Microsoft.MixedReality.Toolkit.Utilities;
+using TMPro;
 using UnityEngine;
 using UnityEngine.Profiling.Experimental;
 
@@ -12,16 +16,30 @@ namespace CityAR
 
         public GameObject districtPrefab;
         public GameObject buildingPrefab;
+        public TextMeshPro text;
         private DataObject _dataObject;
         private GameObject _platform;
         private Data _data;
+        private Metric _current;
+        
+
+        private enum Metric
+        {
+            LinesOfCode,
+            NumberOfInterfaces,
+            NumberOfMethods,
+            NumberOfAbstractClasses,
+        }
 
         private void Start()
         {
             _platform = GameObject.Find("Platform");
             _data = _platform.GetComponent<Data>();
             _dataObject = _data.ParseData();
+            _current = Metric.LinesOfCode;
             BuildCity(_dataObject);
+            
+            _platform.GetComponent<BoundsControl>().UpdateBounds();
         }
 
         private void BuildCity(DataObject p)
@@ -44,10 +62,26 @@ namespace CityAR
 
             GameObject prefabInstance = Instantiate(buildingPrefab, entry.parentEntry.goc.transform, true);
             prefabInstance.name = entry.name;
-            float height = entry.numberOfLines;
+            float height;
+            switch (_current)
+            {
+                case Metric.NumberOfInterfaces:
+                    height = entry.numberOfInterfaces * 20f;
+                    break;
+                case Metric.NumberOfMethods:
+                    height = entry.numberOfMethods * 1.136f;
+                    break;
+                case Metric.NumberOfAbstractClasses:
+                    height = entry.numberOfAbstractClasses * 33.333f;
+                    break;
+                default: //Lines Of Code
+                    height = entry.numberOfLines * 0.0604f;
+                    break;
+            }
+
             Transform parent = prefabInstance.transform.parent.parent;
             prefabInstance.transform.localScale =
-                new Vector3(size / parent.localScale.x, height / 10, size / parent.localScale.z);
+                new Vector3(size / parent.localScale.x, height, size / parent.localScale.z);
             prefabInstance.transform.GetChild(0).gameObject.transform.localPosition = new Vector3(0, 0.5f, 0);
         }
 
@@ -59,28 +93,33 @@ namespace CityAR
         {
             if (entry.type.Equals("File"))
             {
-                //TODO if entry is from type File, create building
-                /*
-                GameObject parent = GameObject.Find(entry.parentEntry.name);
-                if (parent == null)
-                {
-                    Debug.Log("sad. Name: " + entry.parentEntry.name + "Base");
-                    return;
-                }
-                GameObject cube = Instantiate(districtPrefab, parent.transform, true);
-                cube.name = entry.name + ", Parent: " +  entry.parentEntry.name;
-                cube.transform.GetChild(0).GetComponent<MeshRenderer>().material.color = Color.red;
-                cube.transform.localScale = new Vector3(0.01f, 0.01f, 0.01f);
-                //cube.transform.localPosition = new Vector3(entry.x, entry.deepth+0.001f, entry.z);
-                Debug.Log(cube.transform.localPosition);*/
-                
+                //if entry is from type File, create building
+                /*Hat für mich irgendwie wenig Sinn ergeben hier die Gebäude zu erzeugen, weil die Base noch nicht
+                 erzeugt wurde, auf der das Gebäuse stehen soll :(*/
             }
             else
             {
                 float x = entry.x;
                 float z = entry.z;
 
-                float dirLocs = entry.numberOfLines;
+                //float dirLocs = entry.numberOfLines;
+                float dirLocs;
+                switch (_current)
+                {
+                    case Metric.NumberOfInterfaces:
+                        dirLocs = entry.numberOfInterfaces;
+                        break;
+                    case Metric.NumberOfMethods:
+                        dirLocs = entry.numberOfMethods;
+                        break;
+                    case Metric.NumberOfAbstractClasses:
+                        dirLocs = entry.numberOfAbstractClasses;
+                        break;
+                    default: //Lines Of Code
+                        dirLocs = entry.numberOfLines;
+                        break;
+                }
+                //print(dirLocs + "\n" + _current);
                 entry.color = GetColorForDepth(entry.deepth);
 
                 BuildDistrictBlock(entry, false);
@@ -91,7 +130,25 @@ namespace CityAR
                     
                     if (subEntry.type.Equals("Dir"))
                     {
-                        float ratio = subEntry.numberOfLines / dirLocs;
+                        //float ratio = subEntry.numberOfLines / dirLocs;
+                        float ratio;
+                        
+                        switch (_current)
+                        {
+                            case Metric.NumberOfInterfaces:
+                                ratio = subEntry.numberOfInterfaces / dirLocs;
+                                break;
+                            case Metric.NumberOfMethods:
+                                ratio = subEntry.numberOfMethods / dirLocs;
+                                break;
+                            case Metric.NumberOfAbstractClasses:
+                                ratio = subEntry.numberOfAbstractClasses / dirLocs;
+                                break;
+                            default: //Lines of Code
+                                ratio = subEntry.numberOfLines / dirLocs;
+                                break;
+                        } 
+                        
                         subEntry.deepth = entry.deepth + 1;
 
                         if (splitHorizontal) {
@@ -168,7 +225,6 @@ namespace CityAR
                     prefabInstance.transform.GetChild(0).rotation = Quaternion.Euler(90,0,0);
                     prefabInstance.transform.localScale = new Vector3(entry.w, 1,entry.h);
                     prefabInstance.transform.localPosition = new Vector3(entry.x, entry.deepth+0.001f, entry.z);
-                    //prefabInstance.transform.GetChild(0).gameObject.AddComponent<GridObjectCollection>();
                 }
                 
                 Vector3 scale = prefabInstance.transform.localScale;
@@ -277,6 +333,42 @@ namespace CityAR
             }
 
             return color;
+        }
+
+        public void RebuildCity()
+        {
+            //Destroy(_platform.GetComponent<BoundsControl>());
+            _platform.GetComponent<BoundsControl>().enabled = false;
+            int max = _platform.transform.childCount;
+            for (int i = 1; i < max; i++)
+            {
+                Destroy(_platform.transform.GetChild(i).gameObject);
+            }
+            BuildCity(_data.ParseData());
+            _platform.GetComponent<BoundsControl>().enabled = true;
+            _platform.GetComponent<BoundsControl>().UpdateBounds();
+        }
+
+        public void ChangeMetricAndRebuild()
+        {
+            switch (_current)
+            {
+                case Metric.NumberOfInterfaces:
+                    _current = Metric.NumberOfMethods;
+                    break;
+                case Metric.NumberOfMethods:
+                    _current = Metric.NumberOfAbstractClasses;
+                    break;
+                case Metric.NumberOfAbstractClasses:
+                    _current = Metric.LinesOfCode;
+                    break;
+                case Metric.LinesOfCode:
+                    _current = Metric.NumberOfInterfaces;
+                    break;
+            }
+
+            text.text = _current.ToString();
+            RebuildCity();
         }
     }
 }
