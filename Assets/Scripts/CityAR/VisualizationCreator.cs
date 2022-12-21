@@ -1,5 +1,9 @@
-﻿using DefaultNamespace;
+﻿using System;
+using DefaultNamespace;
+using Microsoft.MixedReality.Toolkit;
+using Microsoft.MixedReality.Toolkit.Utilities;
 using UnityEngine;
+using UnityEngine.Profiling.Experimental;
 
 namespace CityAR
 {
@@ -7,6 +11,7 @@ namespace CityAR
     {
 
         public GameObject districtPrefab;
+        public GameObject buildingPrefab;
         private DataObject _dataObject;
         private GameObject _platform;
         private Data _data;
@@ -30,6 +35,22 @@ namespace CityAR
             }
         }
 
+        private void BuildBuilding(Entry entry, float size)
+        {
+            if (entry == null)
+            {
+                return;
+            }
+
+            GameObject prefabInstance = Instantiate(buildingPrefab, entry.parentEntry.goc.transform, true);
+            prefabInstance.name = entry.name;
+            float height = entry.numberOfLines;
+            Transform parent = prefabInstance.transform.parent.parent;
+            prefabInstance.transform.localScale =
+                new Vector3(size / parent.localScale.x, height / 10, size / parent.localScale.z);
+            prefabInstance.transform.GetChild(0).gameObject.transform.localPosition = new Vector3(0, 0.5f, 0);
+        }
+
         /*
          * entry: Single entry from the data set. This can be either a folder or a single file.
          * splitHorizontal: Specifies whether the subsequent children should be split horizontally or vertically along the parent
@@ -39,6 +60,20 @@ namespace CityAR
             if (entry.type.Equals("File"))
             {
                 //TODO if entry is from type File, create building
+                /*
+                GameObject parent = GameObject.Find(entry.parentEntry.name);
+                if (parent == null)
+                {
+                    Debug.Log("sad. Name: " + entry.parentEntry.name + "Base");
+                    return;
+                }
+                GameObject cube = Instantiate(districtPrefab, parent.transform, true);
+                cube.name = entry.name + ", Parent: " +  entry.parentEntry.name;
+                cube.transform.GetChild(0).GetComponent<MeshRenderer>().material.color = Color.red;
+                cube.transform.localScale = new Vector3(0.01f, 0.01f, 0.01f);
+                //cube.transform.localPosition = new Vector3(entry.x, entry.deepth+0.001f, entry.z);
+                Debug.Log(cube.transform.localPosition);*/
+                
             }
             else
             {
@@ -129,10 +164,11 @@ namespace CityAR
                 else
                 {
                     prefabInstance.name = entry.name+"Base";
+                    prefabInstance.transform.GetChild(0).GetComponent<MeshRenderer>().enabled = false;
                     prefabInstance.transform.GetChild(0).rotation = Quaternion.Euler(90,0,0);
                     prefabInstance.transform.localScale = new Vector3(entry.w, 1,entry.h);
                     prefabInstance.transform.localPosition = new Vector3(entry.x, entry.deepth+0.001f, entry.z);
-
+                    //prefabInstance.transform.GetChild(0).gameObject.AddComponent<GridObjectCollection>();
                 }
                 
                 Vector3 scale = prefabInstance.transform.localScale;
@@ -143,6 +179,62 @@ namespace CityAR
                 prefabInstance.transform.localScale = new Vector3(scaleX, scale.y, scaleZ);
                 Vector3 position = prefabInstance.transform.localPosition;
                 prefabInstance.transform.localPosition = new Vector3(position.x - shiftX, position.y, position.z + shiftZ);
+                if (isBase)
+                {
+                    float size = 0.02f;
+                    float offset = 0.1f;
+                    float buildinghöhe = size / prefabInstance.transform.localScale.z;
+                    float buildingbreite = size / prefabInstance.transform.localScale.x;
+                    prefabInstance.transform.GetChild(0).gameObject.AddComponent<GridObjectCollection>();
+                    entry.goc = prefabInstance.transform.GetChild(0).GetComponent<GridObjectCollection>();
+                    
+                    entry.goc.CellWidth = size / prefabInstance.transform.localScale.x + 0.01f;
+                    
+                    if (h > w)
+                    {
+                        entry.goc.Layout = LayoutOrder.ColumnThenRow;
+                        entry.goc.CellWidth = buildingbreite + offset;
+                        entry.goc.CellHeight = size / prefabInstance.transform.localScale.z + 0.01f;
+                        if ((buildingbreite + offset) * 3 > 1)
+                        {
+                            if ((buildingbreite + offset) * 2 > 1)
+                            {
+                                entry.goc.Columns = 1;
+                            }
+                            else
+                            {
+                                entry.goc.Columns = 2;
+                            }
+                        }
+                    }
+                    else
+                    {
+                        entry.goc.CellHeight = buildinghöhe + offset;
+                        entry.goc.CellWidth = size / prefabInstance.transform.localScale.x + 0.01f;
+                        if ((buildinghöhe + offset) * 3 > 1)
+                        {
+                            if ((buildinghöhe + offset) * 2 > 1)
+                            {
+                                entry.goc.Rows = 1;
+                            }
+                            else
+                            {
+                                entry.goc.Rows = 2;
+                            }
+                        }
+                    }
+
+                    entry.goc.SortType = CollationOrder.ChildOrder;
+                    foreach (Entry file in entry.files)
+                    {
+                        if (file.type.Equals("File"))
+                        {
+                            BuildBuilding(file, size);
+                        }
+                    }
+                    
+                    entry.goc.UpdateCollection();
+                }
             }
         }
 
