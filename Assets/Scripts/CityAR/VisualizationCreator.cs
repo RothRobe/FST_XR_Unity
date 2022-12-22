@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using DefaultNamespace;
 using Microsoft.MixedReality.Toolkit;
 using Microsoft.MixedReality.Toolkit.Input;
@@ -17,11 +18,13 @@ namespace CityAR
         public GameObject districtPrefab;
         public GameObject buildingPrefab;
         public TextMeshPro text;
+        public ToolTip toolTipPrefab;
         private DataObject _dataObject;
         private GameObject _platform;
         private Data _data;
         private Metric _current;
-        
+        private Dictionary<GameObject, float> _buildingHeights;
+
 
         private enum Metric
         {
@@ -37,6 +40,7 @@ namespace CityAR
             _data = _platform.GetComponent<Data>();
             _dataObject = _data.ParseData();
             _current = Metric.LinesOfCode;
+            _buildingHeights = new Dictionary<GameObject, float>();
             BuildCity(_dataObject);
             
             _platform.GetComponent<BoundsControl>().UpdateBounds();
@@ -79,10 +83,27 @@ namespace CityAR
                     break;
             }
 
+            _buildingHeights[prefabInstance] = height;
+
+
+            //Set size and scaling
             Transform parent = prefabInstance.transform.parent.parent;
             prefabInstance.transform.localScale =
                 new Vector3(size / parent.localScale.x, height, size / parent.localScale.z);
             prefabInstance.transform.GetChild(0).gameObject.transform.localPosition = new Vector3(0, 0.5f, 0);
+            
+            
+            //Create Prefab
+            toolTipPrefab = Instantiate(toolTipPrefab, prefabInstance.transform.GetChild(0), false);
+            toolTipPrefab.gameObject.SetActive(false);
+            toolTipPrefab.name = "ToolTip_" + entry.name;
+            toolTipPrefab.ToolTipText = "Name: " + entry.name + "\nMetrik: "+ _current + "\nValue: " + entry.numberOfLines;
+            
+            Transform toolTipTransform = toolTipPrefab.transform;
+            float parentScaleY = toolTipTransform.parent.parent.localScale.y;
+            toolTipPrefab.transform.localScale = new Vector3(toolTipTransform.localScale.x, 100f/parentScaleY, toolTipTransform.localScale.z);
+            toolTipPrefab.transform.position = new Vector3(toolTipTransform.position.x,
+                0 + parentScaleY * 0.01f, toolTipTransform.position.z);
         }
 
         /*
@@ -369,6 +390,25 @@ namespace CityAR
 
             text.text = _current.ToString();
             RebuildCity();
+        }
+
+        public void Rescale(float value)
+        {
+            int max = _platform.transform.childCount;
+            for (int i = 1; i < max; i++)
+            {
+                if (_platform.transform.GetChild(i).name.Contains("Base"))
+                {
+                    float childMax = _platform.transform.GetChild(i).GetChild(0).childCount;
+                    for(int j = 0; j < childMax; j++)
+                    {
+                        GameObject go = _platform.transform.GetChild(i).GetChild(0).GetChild(j).gameObject;
+                        Vector3 localPositon = go.transform.localScale;
+                        go.transform.localScale =
+                            new Vector3(localPositon.x, _buildingHeights[go] * value, localPositon.z);
+                    }
+                }
+            }
         }
     }
 }

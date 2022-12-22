@@ -12,7 +12,8 @@ GameObject:
   - component: {fileID: 6195428815128195963}
   - component: {fileID: 7104677826814525643}
   - component: {fileID: 6848138140557426026}
-  - component: {fileID: 6065086791623813703}
+  - component: {fileID: 7853464750816062922}
+  - component: {fileID: 1302856730979097315}
   m_Layer: 0
   m_Name: Cube
   m_TagString: Untagged
@@ -96,7 +97,7 @@ BoxCollider:
   serializedVersion: 2
   m_Size: {x: 1, y: 1, z: 1}
   m_Center: {x: 0, y: 0, z: 0}
---- !u!114 &6065086791623813703
+--- !u!114 &7853464750816062922
 MonoBehaviour:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
@@ -105,35 +106,28 @@ MonoBehaviour:
   m_GameObject: {fileID: 2863806497417052282}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 193c362eb02741c43b31788b51c83d73, type: 3}
+  m_Script: {fileID: 11500000, guid: 98c748f3768ab714a8449b60fb9edc5c, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  focusEnabled: 1
-  prefab: {fileID: 1083549605185280, guid: afaef0108a478c44a9eac26658bc29bf, type: 3}
-  tooltipToggleAction:
-    id: 0
-    description: None
-    axisConstraint: 0
-  appearType: 0
-  vanishType: 0
-  remainType: 1
-  appearDelay: 0
-  vanishDelay: 2
-  lifetime: 10
-  keepWorldRotation: 1
-  settingsMode: 0
-  showBackground: 1
-  showOutline: 0
-  showConnector: 1
-  followType: 9
-  pivotMode: 0
-  pivotDirection: 1
-  pivotDirectionOrient: 1
-  manualPivotDirection: {x: 0, y: 1, z: 0}
-  manualPivotLocalPosition: {x: 0, y: 1, z: 0}
-  pivotDistance: 0.25
-  toolTipText: New Tooltip
-  anchor: {fileID: 0}
+  eventsToReceive: 0
+  debounceThreshold: 0.01
+  localForward: {x: -0, y: -0, z: -1}
+  localUp: {x: 0, y: 1, z: 0}
+  localCenter: {x: 0, y: 0, z: -0.5}
+  bounds: {x: 1, y: 1}
+  touchableCollider: {fileID: 6848138140557426026}
+--- !u!114 &1302856730979097315
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2863806497417052282}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 095cc9281885e794b84949614bef135e, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
 --- !u!1 &3599357934329037633
 GameObject:
   m_ObjectHideFlags: 0
