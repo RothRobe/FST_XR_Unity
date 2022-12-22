@@ -8,7 +8,7 @@ using Microsoft.MixedReality.Toolkit.UI;
 using TMPro;
 using UnityEngine;
 
-public class ChangeNumberAccordingToSlider : MonoBehaviour
+public class ChangeAccordingToSlider : MonoBehaviour
 {
     // Start is called before the first frame update
     public TextMeshPro text;

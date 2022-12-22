@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using DefaultNamespace;
 using Microsoft.MixedReality.Toolkit;
+using Microsoft.MixedReality.Toolkit.Experimental.UI;
 using Microsoft.MixedReality.Toolkit.Input;
 using Microsoft.MixedReality.Toolkit.UI;
 using Microsoft.MixedReality.Toolkit.UI.BoundsControl;
@@ -82,7 +83,7 @@ namespace CityAR
                     height = entry.numberOfLines * 0.0604f;
                     break;
             }
-
+            if (height == 0) height = 0.0000000000000000000001f;
             _buildingHeights[prefabInstance] = height;
 
 
@@ -93,7 +94,7 @@ namespace CityAR
             prefabInstance.transform.GetChild(0).gameObject.transform.localPosition = new Vector3(0, 0.5f, 0);
             
             
-            //Create Prefab
+            //Create ToolTipPrefab
             toolTipPrefab = Instantiate(toolTipPrefab, prefabInstance.transform.GetChild(0), false);
             toolTipPrefab.gameObject.SetActive(false);
             toolTipPrefab.name = "ToolTip_" + entry.name;
@@ -258,6 +259,7 @@ namespace CityAR
                 prefabInstance.transform.localPosition = new Vector3(position.x - shiftX, position.y, position.z + shiftZ);
                 if (isBase)
                 {
+                    //GridObjectCollection vorbereiten und Gebäude bauen
                     float size = 0.02f;
                     float offset = 0.1f;
                     float buildinghöhe = size / prefabInstance.transform.localScale.z;
@@ -394,6 +396,7 @@ namespace CityAR
 
         public void Rescale(float value)
         {
+            if (_platform == null) return;
             int max = _platform.transform.childCount;
             for (int i = 1; i < max; i++)
             {
@@ -409,6 +412,7 @@ namespace CityAR
                     }
                 }
             }
+            _platform.GetComponent<BoundsControl>().UpdateBounds();
         }
     }
 }
