@@ -390,6 +390,8 @@ namespace CityAR
 
         public void ChangeMetricAndRebuild()
         {
+            Quaternion rotation = _platform.transform.rotation;
+            _platform.transform.rotation = Quaternion.Euler(0,0,0);
             switch (_current)
             {
                 case Metric.NumberOfInterfaces:
@@ -408,6 +410,7 @@ namespace CityAR
 
             text.text = _current.ToString();
             RebuildCity();
+            _platform.transform.rotation = rotation;
         }
 
         public void Rescale(float value)
@@ -429,6 +432,13 @@ namespace CityAR
                 }
             }
             _platform.GetComponent<BoundsControl>().UpdateBounds();
+        }
+
+        public void Reset()
+        {
+            _platform.transform.rotation = Quaternion.Euler(0,0,0);
+            _platform.transform.position = new Vector3(0, -0.5f, 0);
+            _platform.transform.localScale = new Vector3(1, 0.01f, 1);
         }
     }
 }
