@@ -98,7 +98,23 @@ namespace CityAR
             toolTipPrefab = Instantiate(toolTipPrefab, prefabInstance.transform.GetChild(0), false);
             toolTipPrefab.gameObject.SetActive(false);
             toolTipPrefab.name = "ToolTip_" + entry.name;
-            toolTipPrefab.ToolTipText = "Name: " + entry.name + "\nMetrik: "+ _current + "\nValue: " + entry.numberOfLines;
+            float value;
+            switch (_current)
+            {
+                case Metric.NumberOfInterfaces:
+                    value = entry.numberOfInterfaces ;
+                    break;
+                case Metric.NumberOfMethods:
+                    value = entry.numberOfMethods;
+                    break;
+                case Metric.NumberOfAbstractClasses:
+                    value = entry.numberOfAbstractClasses;
+                    break;
+                default: //Lines Of Code
+                    value = entry.numberOfLines;
+                    break;
+            }
+            toolTipPrefab.ToolTipText = "Name: " + entry.name + "\nMetrik: "+ _current + "\nValue: " + value;
             
             Transform toolTipTransform = toolTipPrefab.transform;
             float parentScaleY = toolTipTransform.parent.parent.localScale.y;
